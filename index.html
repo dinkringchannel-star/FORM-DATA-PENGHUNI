@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Data PDF</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: #f4f6f9;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            margin-bottom: 18px;
+        }
+
+
+        label {
+            width: 220px;
+            font-weight: bold;
+            color: #444;
+            flex-shrink: 0;
+            text-align: left;
+            font-size: 12px;
+        }
+
+        input,
+        textarea,
+        select {
+            flex: 1;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .preview {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+        }
+
+        .preview h2 {
+            margin-top: 0;
+            color: #222;
+        }
+
+        .preview p {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+
+        input:disabled {
+            background: #e5e7eb;
+            cursor: not-allowed;
+        }
+
+        .subjudul {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2563eb;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        .tanggal-dibuat {
+            text-align: right;
+            margin-top: 25px;
+            font-size: 12px;
+            color: #555;
+        }
+
+        @media(max-width: 600px) {
+            .container {
+                padding: 18px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .form-group {
+                flex-direction: row;
+                align-items: center;
+            }
+
+            label {
+                width: 130px;
+                font-size: 10px;
+            }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        table th {
+            background: #2563eb;
+            color: white;
+        }
+
+        table input {
+            border: none;
+            width: 100%;
+            padding: 4px;
+        }
+
+        .table-group {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .table-group label {
+            width: 100%;
+            margin-bottom: 2px;
+        }
+
+        .table-wrapper {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Form Data PDF</h1>
+        <h3 class="subjudul">A. Rumah di Cendana</h3>
+        <div class="form-group">
+            <label>Alamat Blok</label>
+            <input type="text" id="alamatblok" placeholder="Masukkan alamat">
+        </div>
+
+        <div class="form-group">
+            <label>Menetap Sejak</label>
+            <input type="text" id="menetapsejak" placeholder="Masukkan bulan dan tahun menetap">
+        </div>
+
+        <div class="form-group">
+            <label>Status Kepemilikan</label>
+            <select id="Status" onchange="cekStatusKepemilikan()">
+                <option value="Milik Sendiri">Milik Sendiri</option>
+                <option value="Kontrak">Kontrak</option>
+                <option value="Keluarga">Keluarga</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Nama Pemilik Rumah</label>
+            <input type="text" id="namapemilik" placeholder="Masukkan nama pemilik rumah">
+        </div>
+
+        <div class="form-group">
+            <label>Nomor HP Pemilik</label>
+            <input id="nomorhppemilik" placeholder="Masukkan nomor HP"></input>
+        </div>
+
+        <h3 class="subjudul">B. DATA KEPALA KELUARGA</h3>
+
+        <div class="form-group">
+            <label>Nama Lengkap</label>
+            <input type="text" id="namaLengkap" placeholder="Masukkan nama lengkap">
+        </div>
+
+        <div class="form-group">
+            <label>Tempat, Tgl. Lahir</label>
+            <input type="text" id="ttl" placeholder="Contoh: Bandung, 12 Januari 1990">
+        </div>
+
+        <div class="form-group">
+            <label>Nomor HP Kepala Keluarga</label>
+            <input type="text" id="nomorHpKk" placeholder="Masukkan 08xxxxxxxxxx">
+        </div>
+
+        <div class="form-group">
+            <label>Agama</label>
+            <select id="agama">
+                <option value="">Pilih Agama</option>
+                <option>Islam</option>
+                <option>Kristen</option>
+                <option>Katolik</option>
+                <option>Hindu</option>
+                <option>Buddha</option>
+                <option>Konghucu</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Jenis Kelamin</label>
+            <select id="jenisKelamin">
+                <option value="">Pilih Jenis Kelamin</option>
+                <option>Laki-laki</option>
+                <option>Perempuan</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Status Perkawinan</label>
+            <select id="statusPerkawinan">
+                <option value="">Pilih Status</option>
+                <option>Belum Menikah</option>
+                <option>Menikah</option>
+                <option>Cerai Hidup</option>
+                <option>Cerai Mati</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Kewarganegaraan</label>
+            <input type="text" id="kewarganegaraan" placeholder="Contoh: Indonesia">
+        </div>
+
+        <div class="form-group">
+            <label>Alamat Sesuai KTP</label>
+            <textarea id="alamatKtp" placeholder="Masukkan alamat sesuai KTP"></textarea>
+        </div>
+
+        <div class="form-group table-group">
+            <h3 class="subjudul">C. DAFTAR PENGHUNI SERUMAH</h3>
+
+            <div class="table-wrapper">
+
+                <table id="familyTable">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Hubungan</th>
+                            <th>Tanggal Lahir</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" placeholder="Nama"></td>
+                            <td><input type="text" placeholder="Hubungan"></td>
+                            <td><input type="date"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <br>
+
+                <button type="button" class="btn" onclick="tambahBaris()">
+                    + Tambah Data
+                </button>
+
+            </div>
+        </div>
+
+
+        <div class="form-group table-group">
+            <h3 class="subjudul">D. KONTAK DARURAT</h3>
+
+            <div class="table-wrapper">
+
+                <table id="emergencyTable">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Nomor WA</th>
+                            <th>Hubungan</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td><input type="text" placeholder="Nama"></td>
+                            <td><input type="text" placeholder="08xxxxxxxxxx"></td>
+                            <td><input type="text" placeholder="Hubungan"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <br>
+
+                <button type="button" class="btn" onclick="tambahKontakDarurat()">
+                    + Tambah Kontak Darurat
+                </button>
+
+            </div>
+        </div>
+
+        <button class="btn" onclick="generatePDF()">
+            Simpan ke PDF
+        </button>
+        <br><br>
+
+        <div class="tanggal-dibuat">
+            Dibuat tanggal: <span id="tanggalHariIni"></span>
+        </div>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll('input, textarea, select');
+
+        inputs.forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
+
+        function updatePreview() {
+            document.getElementById('preview').innerHTML = `
+    <h2>Preview Data</h2>
+    <p><strong>Alamat Blok:</strong> ${document.getElementById('alamatblok').value || '-'} </p>
+    <p><strong>Menetap Sejak:</strong> ${document.getElementById('menetapsejak').value || '-'} </p>
+    <p><strong>Nama Pemilik Rumah:</strong> ${document.getElementById('namapemilik').value || '-'} </p>
+    <p><strong>Status Kepemilikan:</strong> ${document.getElementById('Status').value || '-'} </p>
+    <p><strong>Nomor HP Pemilik:</strong> ${document.getElementById('nomorhppemilik').value || '-'} </p>
+    `;
+        }
+
+        function kirimWhatsApp() {
+            const alamatblok = document.getElementById('alamatblok').value;
+            const menetapsejak = document.getElementById('menetapsejak').value;
+            const namapemilik = document.getElementById('namapemilik').value;
+            const Status = document.getElementById('Status').value;
+            const nomorhppemilik = document.getElementById('nomorhppemilik').value;
+
+            const nomorTujuan = '6289670106887';
+
+            const pesan = `Halo, berikut data formulir:%0A%0A`
+                + `Nama: ${nama}%0A`
+                + `Email: ${email}%0A`
+                + `WhatsApp: ${wa}%0A`
+                + `Jenis Kelamin: ${status}%0A`
+                + `Alamat: ${alamat}`;
+
+            window.open(`https://wa.me/${nomorTujuan}?text=${pesan}`, '_blank');
+        }
+
+
+
+        async function generatePDF() {
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // WARNA BIRU
+            const biru = [37, 99, 235];
+
+            // AMBIL DATA
+            const alamatblok = document.getElementById('alamatblok').value;
+            const menetapsejak = document.getElementById('menetapsejak').value;
+            const namapemilik = document.getElementById('namapemilik').value;
+            const Status = document.getElementById('Status').value;
+            const nomorhppemilik = document.getElementById('nomorhppemilik').value;
+
+            // ================= JUDUL =================
+
+            doc.setFontSize(18);
+            doc.setTextColor(...biru);
+            doc.text('DATA FORMULIR', 105, 20, { align: 'center' });
+
+            doc.setTextColor(0, 0, 0);
+
+            const xLabel = 20;
+            const xTitik = 70;
+            const xValue = 75;
+
+            // ================= A. RUMAH DI CENDANA =================
+
+            doc.setFontSize(14);
+            doc.setTextColor(...biru);
+            doc.text('A. RUMAH DI CENDANA', 20, 32);
+
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
+
+            doc.text('Alamat Blok', xLabel, 42);
+            doc.text(':', xTitik, 42);
+            doc.text(alamatblok || '-', xValue, 42);
+
+            doc.text('Menetap Sejak', xLabel, 50);
+            doc.text(':', xTitik, 50);
+            doc.text(menetapsejak || '-', xValue, 50);
+
+            doc.text('Status Kepemilikan', xLabel, 58);
+            doc.text(':', xTitik, 58);
+            doc.text(Status || '-', xValue, 58);
+
+            doc.text('Nama Pemilik Rumah', xLabel, 66);
+            doc.text(':', xTitik, 66);
+            doc.text(namapemilik || '-', xValue, 66);
+
+            doc.text('Nomor HP Pemilik', xLabel, 74);
+            doc.text(':', xTitik, 74);
+            doc.text(nomorhppemilik || '-', xValue, 74);
+
+            // ================= DATA KEPALA KELUARGA =================
+
+            const namaLengkap = document.getElementById('namaLengkap').value;
+            const ttl = document.getElementById('ttl').value;
+            const nomorHpKk = document.getElementById('nomorHpKk').value;
+            const agama = document.getElementById('agama').value;
+            const jenisKelamin = document.getElementById('jenisKelamin').value;
+            const statusPerkawinan = document.getElementById('statusPerkawinan').value;
+            const kewarganegaraan = document.getElementById('kewarganegaraan').value;
+            const alamatKtp = document.getElementById('alamatKtp').value;
+
+            doc.setFontSize(14);
+            doc.setTextColor(...biru);
+            doc.text('B. DATA KEPALA KELUARGA', 20, 95);
+
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(12);
+
+            let yData = 103;
+
+            doc.text('Nama Lengkap', xLabel, yData);
+            doc.text(':', xTitik, yData);
+            doc.text(namaLengkap || '-', xValue, yData);
+
+            yData += 8;
+
+            doc.text('Tempat, Tgl. Lahir', xLabel, yData);
+            doc.text(':', xTitik, yData);
+            doc.text(ttl || '-', xValue, yData);
+
+            yData += 8;
+
+            doc.text('Nomor HP', xLabel, yData);
+            doc.text(':', xTitik, yData);
+            doc.text(nomorHpKk || '-', xValue, yData);
+
+            yData += 8;
+
+            doc.text('Agama', xLabel, yData);
+            doc.text(':', xTitik, yData);
+            doc.text(agama || '-', xValue, yData);
+
+            yData += 8;
+
+            doc.text('Jenis Kelamin', xLabel, yData);
+            doc.text(':', xTitik, yData);
+            doc.text(jenisKelamin || '-', xValue, yData);
+
+            yData += 8;
+
+            doc.text('Status Perkawinan', xLabel, yData);
+            doc.text(':', xTitik, yData);
+            doc.text(statusPerkawinan || '-', xValue, yData);
+
+            yData += 8;
+
+            doc.text('Kewarganegaraan', xLabel, yData);
+            doc.text(':', xTitik, yData);
+            doc.text(kewarganegaraan || '-', xValue, yData);
+
+            yData += 8;
+
+            doc.text('Alamat Sesuai KTP', xLabel, yData);
+            doc.text(':', xTitik, yData);
+
+            const splitAlamat = doc.splitTextToSize(alamatKtp || '-', 110);
+            doc.text(splitAlamat, xValue, yData);
+
+            let y = yData + (splitAlamat.length * 5) + 10;
+
+            // ================= C. DAFTAR PENGHUNI =================
+
+            doc.setFontSize(14);
+            doc.setTextColor(...biru);
+            doc.text('C. DAFTAR PENGHUNI SERUMAH', 20, y);
+
+            doc.setTextColor(0, 0, 0);
+
+            y += 8;
+
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(0.5);
+
+            doc.rect(20, y - 5, 60, 8);
+            doc.rect(80, y - 5, 60, 8);
+            doc.rect(140, y - 5, 50, 8);
+
+            doc.text('Nama', 25, y);
+            doc.text('Hubungan', 85, y);
+            doc.text('Tanggal Lahir', 145, y);
+
+            y += 8;
+
+            const rows = document.querySelectorAll('#familyTable tbody tr');
+
+            rows.forEach((row) => {
+
+                const cols = row.querySelectorAll('input');
+
+                const namaKeluarga = cols[0].value || '-';
+                const hubungan = cols[1].value || '-';
+                const tanggal = cols[2].value || '-';
+
+                doc.rect(20, y - 5, 60, 8);
+                doc.rect(80, y - 5, 60, 8);
+                doc.rect(140, y - 5, 50, 8);
+
+                doc.text(namaKeluarga, 25, y);
+                doc.text(hubungan, 85, y);
+                doc.text(tanggal, 145, y);
+
+                y += 8;
+            });
+
+            // ================= D. KONTAK DARURAT =================
+
+            // Tambah jarak ke bawah
+            y += 10;
+
+            doc.setFontSize(14);
+            doc.setTextColor(...biru);
+            doc.text('D. KONTAK DARURAT', 20, y);
+
+            doc.setTextColor(0, 0, 0);
+
+            y += 8;
+
+            doc.rect(20, y - 5, 60, 8);
+            doc.rect(80, y - 5, 60, 8);
+            doc.rect(140, y - 5, 50, 8);
+
+            doc.text('Nama', 25, y);
+            doc.text('Nomor WA', 85, y);
+            doc.text('Hubungan', 145, y);
+
+            y += 8;
+
+            // AMBIL DATA KONTAK DARURAT
+            const emergencyRows = document.querySelectorAll('#emergencyTable tbody tr');
+
+            emergencyRows.forEach((row) => {
+
+                const cols = row.querySelectorAll('input');
+
+                const namaDarurat = cols[0].value || '-';
+                const nomorWa = cols[1].value || '-';
+                const hubunganDarurat = cols[2].value || '-';
+
+                // Kotak tabel
+                doc.rect(20, y - 5, 60, 8);
+                doc.rect(80, y - 5, 60, 8);
+                doc.rect(140, y - 5, 50, 8);
+
+                // Isi tabel
+                doc.text(namaDarurat, 25, y);
+                doc.text(nomorWa, 85, y);
+                doc.text(hubunganDarurat, 145, y);
+
+                y += 8;
+            });
+
+            // ================= TANGGAL DIBUAT =================
+
+            const tanggalSekarang = new Date();
+
+            const tanggalFormat = tanggalSekarang.toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            });
+
+            // Posisi kanan bawah PDF
+            doc.setFontSize(10);
+
+            doc.text(
+                `Dibuat tanggal: ${tanggalFormat}`,
+                190,
+                y + 15,
+                { align: 'right' }
+            );
+
+            // ================= BUAT FILE PDF =================
+
+            const pdfBlob = doc.output('blob');
+
+            const pdfFile = new File(
+                [pdfBlob],
+                'data-form.pdf',
+                { type: 'application/pdf' }
+            );
+
+            // ================= SHARE KE WHATSAPP =================
+
+            if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+
+                try {
+
+                    await navigator.share({
+                        title: 'Data Formulir',
+                        text: 'Berikut data formulir PDF',
+                        files: [pdfFile]
+                    });
+
+                } catch (err) {
+
+                    console.log(err);
+
+                }
+
+            } else {
+
+                // fallback browser desktop
+                doc.save('data-form.pdf');
+
+                alert('Browser tidak mendukung share PDF langsung ke WhatsApp');
+
+            }
+
+        }
+
+        function tambahBaris() {
+            const tbody = document.querySelector('#familyTable tbody');
+
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+        <td><input type="text" placeholder="Nama"></td>
+        <td><input type="text" placeholder="Hubungan"></td>
+        <td><input type="date"></td>
+    `;
+
+            tbody.appendChild(tr);
+        }
+
+
+        function tambahKontakDarurat() {
+            const tbody = document.querySelector('#emergencyTable tbody');
+
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+        <td><input type="text" placeholder="Nama"></td>
+        <td><input type="text" placeholder="08xxxxxxxxxx"></td>
+        <td><input type="text" placeholder="Hubungan"></td>
+    `;
+
+            tbody.appendChild(tr);
+        }
+
+        function cekStatusKepemilikan() {
+
+            const status = document.getElementById('Status').value;
+
+            const namaPemilik = document.getElementById('namapemilik');
+            const nomorhppemilik = document.getElementById('nomorhppemilik');
+
+            // Jika Milik Sendiri
+            if (status === 'Milik Sendiri') {
+
+                // Nonaktifkan input
+                namaPemilik.disabled = true;
+                nomorhppemilik.disabled = true;
+
+                // Kosongkan isi
+                namaPemilik.value = '';
+                nomorhppemilik.value = '';
+
+                // Ubah placeholder
+                namaPemilik.placeholder = 'Tidak perlu diisi';
+                nomorhppemilik.placeholder = 'Tidak perlu diisi';
+
+            } else {
+
+                // Aktifkan input
+                namaPemilik.disabled = false;
+                nomorhppemilik.disabled = false;
+
+                // Kembalikan placeholder
+                namaPemilik.placeholder = 'Masukkan nama pemilik rumah';
+                nomorhppemilik.placeholder = 'Masukkan nomor HP';
+            }
+        }
+
+        // Jalankan otomatis saat halaman dibuka
+        window.onload = cekStatusKepemilikan;
+
+        // Tanggal otomatis hari ini
+        const tanggal = new Date();
+
+        const opsiTanggal = {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        };
+
+        document.getElementById('tanggalHariIni').innerHTML =
+            tanggal.toLocaleDateString('id-ID', opsiTanggal);
+    </script>
+
+</body>
+
+</html>

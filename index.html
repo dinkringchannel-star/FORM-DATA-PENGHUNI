@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Form Data PDF</title>
+    <title>Form Data - Google Sheets & Drive</title>
+
+    <!-- Isi dengan URL Web App Google Apps Script setelah Deploy -->
+    <script>const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz4-KDfJt6CGg-RplSzHHlGrtcuE9-wlvz5kUjqPjk3qKNtMxf58LDbDJcs4UhhRQxT/exec';</script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -181,6 +184,8 @@
         .table-wrapper {
             width: 100%;
         }
+            .btn:disabled { opacity: .65; cursor: wait; }
+        .info-drive { margin-top: 15px; padding: 12px; background: #eef6ff; border-radius: 10px; font-size: 12px; }
     </style>
 </head>
 
@@ -342,8 +347,12 @@
             </div>
         </div>
 
-        <button class="btn" onclick="generatePDF()">
-            Kirim PDF ke Whatsapp
+        <button class="btn" id="btnSimpan" onclick="simpanData()">
+            💾 Simpan Data
+        </button>
+        <br><br>
+        <button class="btn" type="button" onclick="downloadPDFLokal()">
+            📤 Kirim PDF ke WhatsApp
         </button>
         <br><br>
 
@@ -360,14 +369,9 @@
         });
 
         function updatePreview() {
-            document.getElementById('preview').innerHTML = `
-    <h2>Preview Data</h2>
-    <p><strong>Alamat Blok:</strong> ${document.getElementById('alamatblok').value || '-'} </p>
-    <p><strong>Menetap Sejak:</strong> ${document.getElementById('menetapsejak').value || '-'} </p>
-    <p><strong>Nama Pemilik Rumah:</strong> ${document.getElementById('namapemilik').value || '-'} </p>
-    <p><strong>Status Kepemilikan:</strong> ${document.getElementById('Status').value || '-'} </p>
-    <p><strong>Nomor HP Pemilik:</strong> ${document.getElementById('nomorhppemilik').value || '-'} </p>
-    `;
+            // Preview bersifat opsional. Tidak menjalankan apa pun jika elemen preview tidak ada.
+            const preview = document.getElementById('preview');
+            if (!preview) return;
         }
 
         function kirimWhatsApp() {
@@ -391,280 +395,300 @@
 
 
 
-        async function generatePDF() {
+        function ambilDataForm() {
+            const get = id => document.getElementById(id)?.value || '';
 
+            const penghuni = [...document.querySelectorAll('#familyTable tbody tr')].map(row => {
+                const c = row.querySelectorAll('input');
+                return {
+                    nama: c[0]?.value || '',
+                    hubungan: c[1]?.value || '',
+                    tanggalLahir: c[2]?.value || ''
+                };
+            }).filter(r => r.nama || r.hubungan || r.tanggalLahir);
+
+            const kontakDarurat = [...document.querySelectorAll('#emergencyTable tbody tr')].map(row => {
+                const c = row.querySelectorAll('input');
+                return {
+                    nama: c[0]?.value || '',
+                    nomorWa: c[1]?.value || '',
+                    hubungan: c[2]?.value || ''
+                };
+            }).filter(r => r.nama || r.nomorWa || r.hubungan);
+
+            return {
+                alamatblok: get('alamatblok'),
+                menetapsejak: get('menetapsejak'),
+                statusKepemilikan: get('Status'),
+                namapemilik: get('namapemilik'),
+                nomorhppemilik: get('nomorhppemilik'),
+                namaLengkap: get('namaLengkap'),
+                ttl: get('ttl'),
+                nomorHpKk: get('nomorHpKk'),
+                agama: get('agama'),
+                jenisKelamin: get('jenisKelamin'),
+                statusPerkawinan: get('statusPerkawinan'),
+                kewarganegaraan: get('kewarganegaraan'),
+                alamatKtp: get('alamatKtp'),
+                penghuni,
+                kontakDarurat
+            };
+        }
+
+        async function buatPDFBlob() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-
-            // WARNA BIRU
             const biru = [37, 99, 235];
-
-            // AMBIL DATA
-            const alamatblok = document.getElementById('alamatblok').value;
-            const menetapsejak = document.getElementById('menetapsejak').value;
-            const namapemilik = document.getElementById('namapemilik').value;
-            const Status = document.getElementById('Status').value;
-            const nomorhppemilik = document.getElementById('nomorhppemilik').value;
-
-            // ================= JUDUL =================
+            const data = ambilDataForm();
 
             doc.setFontSize(18);
             doc.setTextColor(...biru);
             doc.text('DATA FORMULIR', 105, 20, { align: 'center' });
-
             doc.setTextColor(0, 0, 0);
 
-            const xLabel = 20;
-            const xTitik = 70;
-            const xValue = 75;
+            const xLabel = 20, xTitik = 70, xValue = 75;
 
-            // ================= A. RUMAH DI CENDANA =================
-
-            doc.setFontSize(14);
-            doc.setTextColor(...biru);
+            doc.setFontSize(14); doc.setTextColor(...biru);
             doc.text('A. RUMAH DI CENDANA', 20, 32);
+            doc.setTextColor(0,0,0); doc.setFontSize(12);
 
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(12);
+            const aRows = [
+                ['Alamat Blok', data.alamatblok],
+                ['Menetap Sejak', data.menetapsejak],
+                ['Status Kepemilikan', data.statusKepemilikan],
+                ['Nama Pemilik Rumah', data.namapemilik],
+                ['Nomor HP Pemilik', data.nomorhppemilik]
+            ];
+            let y = 42;
+            aRows.forEach(([label,val]) => {
+                doc.text(label, xLabel, y); doc.text(':', xTitik, y);
+                doc.text(val || '-', xValue, y); y += 8;
+            });
 
-            doc.text('Alamat Blok', xLabel, 42);
-            doc.text(':', xTitik, 42);
-            doc.text(alamatblok || '-', xValue, 42);
-
-            doc.text('Menetap Sejak', xLabel, 50);
-            doc.text(':', xTitik, 50);
-            doc.text(menetapsejak || '-', xValue, 50);
-
-            doc.text('Status Kepemilikan', xLabel, 58);
-            doc.text(':', xTitik, 58);
-            doc.text(Status || '-', xValue, 58);
-
-            doc.text('Nama Pemilik Rumah', xLabel, 66);
-            doc.text(':', xTitik, 66);
-            doc.text(namapemilik || '-', xValue, 66);
-
-            doc.text('Nomor HP Pemilik', xLabel, 74);
-            doc.text(':', xTitik, 74);
-            doc.text(nomorhppemilik || '-', xValue, 74);
-
-            // ================= DATA KEPALA KELUARGA =================
-
-            const namaLengkap = document.getElementById('namaLengkap').value;
-            const ttl = document.getElementById('ttl').value;
-            const nomorHpKk = document.getElementById('nomorHpKk').value;
-            const agama = document.getElementById('agama').value;
-            const jenisKelamin = document.getElementById('jenisKelamin').value;
-            const statusPerkawinan = document.getElementById('statusPerkawinan').value;
-            const kewarganegaraan = document.getElementById('kewarganegaraan').value;
-            const alamatKtp = document.getElementById('alamatKtp').value;
-
-            doc.setFontSize(14);
-            doc.setTextColor(...biru);
+            doc.setFontSize(14); doc.setTextColor(...biru);
             doc.text('B. DATA KEPALA KELUARGA', 20, 95);
+            doc.setTextColor(0,0,0); doc.setFontSize(12);
+            y = 103;
+            [
+                ['Nama Lengkap', data.namaLengkap],
+                ['Tempat, Tgl. Lahir', data.ttl],
+                ['Nomor HP', data.nomorHpKk],
+                ['Agama', data.agama],
+                ['Jenis Kelamin', data.jenisKelamin],
+                ['Status Perkawinan', data.statusPerkawinan],
+                ['Kewarganegaraan', data.kewarganegaraan]
+            ].forEach(([label,val]) => {
+                doc.text(label, xLabel, y); doc.text(':', xTitik, y);
+                doc.text(val || '-', xValue, y); y += 8;
+            });
 
-            doc.setTextColor(0, 0, 0);
-            doc.setFontSize(12);
+            doc.text('Alamat Sesuai KTP', xLabel, y); doc.text(':', xTitik, y);
+            const splitAlamat = doc.splitTextToSize(data.alamatKtp || '-', 110);
+            doc.text(splitAlamat, xValue, y);
+            y += splitAlamat.length * 5 + 10;
 
-            let yData = 103;
-
-            doc.text('Nama Lengkap', xLabel, yData);
-            doc.text(':', xTitik, yData);
-            doc.text(namaLengkap || '-', xValue, yData);
-
-            yData += 8;
-
-            doc.text('Tempat, Tgl. Lahir', xLabel, yData);
-            doc.text(':', xTitik, yData);
-            doc.text(ttl || '-', xValue, yData);
-
-            yData += 8;
-
-            doc.text('Nomor HP', xLabel, yData);
-            doc.text(':', xTitik, yData);
-            doc.text(nomorHpKk || '-', xValue, yData);
-
-            yData += 8;
-
-            doc.text('Agama', xLabel, yData);
-            doc.text(':', xTitik, yData);
-            doc.text(agama || '-', xValue, yData);
-
-            yData += 8;
-
-            doc.text('Jenis Kelamin', xLabel, yData);
-            doc.text(':', xTitik, yData);
-            doc.text(jenisKelamin || '-', xValue, yData);
-
-            yData += 8;
-
-            doc.text('Status Perkawinan', xLabel, yData);
-            doc.text(':', xTitik, yData);
-            doc.text(statusPerkawinan || '-', xValue, yData);
-
-            yData += 8;
-
-            doc.text('Kewarganegaraan', xLabel, yData);
-            doc.text(':', xTitik, yData);
-            doc.text(kewarganegaraan || '-', xValue, yData);
-
-            yData += 8;
-
-            doc.text('Alamat Sesuai KTP', xLabel, yData);
-            doc.text(':', xTitik, yData);
-
-            const splitAlamat = doc.splitTextToSize(alamatKtp || '-', 110);
-            doc.text(splitAlamat, xValue, yData);
-
-            let y = yData + (splitAlamat.length * 5) + 10;
-
-            // ================= C. DAFTAR PENGHUNI =================
-
-            doc.setFontSize(14);
-            doc.setTextColor(...biru);
-            doc.text('C. DAFTAR PENGHUNI SERUMAH', 20, y);
-
-            doc.setTextColor(0, 0, 0);
-
-            y += 8;
-
-            doc.setDrawColor(0, 0, 0);
-            doc.setLineWidth(0.5);
-
-            doc.rect(20, y - 5, 60, 8);
-            doc.rect(80, y - 5, 60, 8);
-            doc.rect(140, y - 5, 50, 8);
-
-            doc.text('Nama', 25, y);
-            doc.text('Hubungan', 85, y);
-            doc.text('Tanggal Lahir', 145, y);
-
-            y += 8;
-
-            const rows = document.querySelectorAll('#familyTable tbody tr');
-
-            rows.forEach((row) => {
-
-                const cols = row.querySelectorAll('input');
-
-                const namaKeluarga = cols[0].value || '-';
-                const hubungan = cols[1].value || '-';
-                const tanggal = cols[2].value || '-';
-
-                doc.rect(20, y - 5, 60, 8);
-                doc.rect(80, y - 5, 60, 8);
-                doc.rect(140, y - 5, 50, 8);
-
-                doc.text(namaKeluarga, 25, y);
-                doc.text(hubungan, 85, y);
-                doc.text(tanggal, 145, y);
-
+            const addTable = (title, headers, rows, widths) => {
+                if (y > 255) { doc.addPage(); y = 20; }
+                doc.setFontSize(14); doc.setTextColor(...biru); doc.text(title, 20, y);
+                doc.setTextColor(0,0,0); y += 8;
+                let x = 20;
+                doc.setFontSize(10);
+                headers.forEach((h,i) => {
+                    doc.rect(x, y-5, widths[i], 8);
+                    doc.text(h, x+3, y);
+                    x += widths[i];
+                });
                 y += 8;
-            });
-
-            // ================= D. KONTAK DARURAT =================
-
-            // Tambah jarak ke bawah
-            y += 10;
-
-            doc.setFontSize(14);
-            doc.setTextColor(...biru);
-            doc.text('D. KONTAK DARURAT', 20, y);
-
-            doc.setTextColor(0, 0, 0);
-
-            y += 8;
-
-            doc.rect(20, y - 5, 60, 8);
-            doc.rect(80, y - 5, 60, 8);
-            doc.rect(140, y - 5, 50, 8);
-
-            doc.text('Nama', 25, y);
-            doc.text('Nomor WA', 85, y);
-            doc.text('Hubungan', 145, y);
-
-            y += 8;
-
-            // AMBIL DATA KONTAK DARURAT
-            const emergencyRows = document.querySelectorAll('#emergencyTable tbody tr');
-
-            emergencyRows.forEach((row) => {
-
-                const cols = row.querySelectorAll('input');
-
-                const namaDarurat = cols[0].value || '-';
-                const nomorWa = cols[1].value || '-';
-                const hubunganDarurat = cols[2].value || '-';
-
-                // Kotak tabel
-                doc.rect(20, y - 5, 60, 8);
-                doc.rect(80, y - 5, 60, 8);
-                doc.rect(140, y - 5, 50, 8);
-
-                // Isi tabel
-                doc.text(namaDarurat, 25, y);
-                doc.text(nomorWa, 85, y);
-                doc.text(hubunganDarurat, 145, y);
-
-                y += 8;
-            });
-
-            // ================= TANGGAL DIBUAT =================
-
-            const tanggalSekarang = new Date();
-
-            const tanggalFormat = tanggalSekarang.toLocaleDateString('id-ID', {
-                day: '2-digit',
-                month: 'long',
-                year: 'numeric'
-            });
-
-            // Posisi kanan bawah PDF
-            doc.setFontSize(10);
-
-            doc.text(
-                `Dibuat tanggal: ${tanggalFormat}`,
-                190,
-                y + 15,
-                { align: 'right' }
-            );
-
-            // ================= BUAT FILE PDF =================
-
-            const pdfBlob = doc.output('blob');
-
-            const pdfFile = new File(
-                [pdfBlob],
-                'data-form.pdf',
-                { type: 'application/pdf' }
-            );
-
-            // ================= SHARE KE WHATSAPP =================
-
-            if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-
-                try {
-
-                    await navigator.share({
-                        title: 'Data Formulir',
-                        text: 'Berikut data formulir PDF',
-                        files: [pdfFile]
+                rows.forEach(row => {
+                    if (y > 275) { doc.addPage(); y = 20; }
+                    let x = 20;
+                    row.forEach((v,i) => {
+                        doc.rect(x, y-5, widths[i], 8);
+                        const txt = doc.splitTextToSize(String(v || '-'), widths[i]-6)[0];
+                        doc.text(txt, x+3, y);
+                        x += widths[i];
                     });
+                    y += 8;
+                });
+                y += 10;
+            };
 
-                } catch (err) {
+            addTable('C. DAFTAR PENGHUNI SERUMAH',
+                ['Nama','Hubungan','Tanggal Lahir'],
+                data.penghuni.map(r => [r.nama,r.hubungan,r.tanggalLahir]),
+                [60,60,50]);
 
-                    console.log(err);
+            addTable('D. KONTAK DARURAT',
+                ['Nama','Nomor WA','Hubungan'],
+                data.kontakDarurat.map(r => [r.nama,r.nomorWa,r.hubungan]),
+                [60,60,50]);
 
-                }
+            const tanggalFormat = new Date().toLocaleDateString('id-ID', {
+                day:'2-digit', month:'long', year:'numeric'
+            });
+            doc.setFontSize(10);
+            if (y > 280) { doc.addPage(); y = 20; }
+            doc.text(`Dibuat tanggal: ${tanggalFormat}`, 190, y + 5, {align:'right'});
 
-            } else {
+            return doc.output('blob');
+        }
 
-                // fallback browser desktop
-                doc.save('data-form.pdf');
+        async function blobToBase64(blob) {
+            return await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
 
-                alert('Browser tidak mendukung share PDF langsung ke WhatsApp');
-
+        async function simpanData() {
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('GANTI_DENGAN')) {
+                alert('URL Web App Google Apps Script belum diisi.');
+                return;
             }
 
+            const btn = document.getElementById('btnSimpan');
+            const oldText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Menyimpan...';
+
+            try {
+                const data = ambilDataForm();
+                const pdfBlob = await buatPDFBlob();
+                const pdfBase64 = await blobToBase64(pdfBlob);
+
+                const payload = {
+                    action: 'simpan',
+                    data,
+                    pdfBase64,
+                    fileName: `Data_${(data.namaLengkap || 'Form').replace(/[^a-zA-Z0-9_-]/g,'_')}_${Date.now()}.pdf`
+                };
+
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (!result.success) throw new Error(result.message || 'Gagal menyimpan data.');
+
+                alert(
+                    'Berhasil disimpan!' 
+                );
+
+            } catch (err) {
+                console.error(err);
+                alert('Gagal menyimpan data: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = oldText;
+            }
+        }
+
+        async function downloadPDFLokal() {
+            const btn = event?.currentTarget || document.querySelector('button[onclick="downloadPDFLokal()"]');
+            const oldText = btn ? btn.innerHTML : '';
+            let blobUrl = null;
+
+            try {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '⏳ Membuat PDF...';
+                }
+
+                // 1. Buat PDF langsung di browser.
+                const blob = await buatPDFBlob();
+                const data = ambilDataForm();
+                const fileName = `Data_${(data.namaLengkap || 'Form').replace(/[^a-zA-Z0-9_-]/g,'_')}_${Date.now()}.pdf`;
+                const pdfFile = new File([blob], fileName, { type: 'application/pdf' });
+
+                /*
+                 * 2. PRIORITAS: Web Share API.
+                 *
+                 * Jika browser/perangkat mendukung file sharing, PDF akan
+                 * masuk ke dialog Share bawaan perangkat. Pada perangkat yang
+                 * menyediakan WhatsApp sebagai target share, pengguna dapat
+                 * memilih WhatsApp dan PDF dikirim sebagai attachment/file.
+                 *
+                 * navigator.share() HARUS dipanggil dari aksi klik pengguna.
+                 */
+                if (navigator.share && navigator.canShare) {
+                    const shareData = { files: [pdfFile] };
+
+                    if (navigator.canShare(shareData)) {
+                        if (btn) btn.innerHTML = '📤 Membuka WhatsApp...';
+
+                        try {
+                            await navigator.share({
+                                files: [pdfFile],
+                                title: 'Data Formulir PDF',
+                                text: `Data formulir ${data.namaLengkap || ''}`.trim()
+                            });
+
+                            // Berhasil diserahkan ke share target.
+                            return;
+                        } catch (shareErr) {
+                            // Jika user membatalkan dialog share, jangan lanjut
+                            // membuka WhatsApp Web secara otomatis.
+                            if (shareErr && shareErr.name === 'AbortError') {
+                                return;
+                            }
+
+                            console.warn('Web Share API gagal:', shareErr);
+                        }
+                    }
+                }
+
+                /*
+                 * 3. FALLBACK DESKTOP: WhatsApp Web.
+                 *
+                 * WhatsApp Web tidak menyediakan URL resmi yang dapat dipakai
+                 * halaman web untuk menyisipkan attachment PDF otomatis.
+                 * Karena itu fallback membuka chat WhatsApp Web dengan pesan
+                 * dan PDF tetap diunduh agar dapat dilampirkan secara manual.
+                 */
+                blobUrl = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+
+                const nomorTujuan = '6289670106887';
+                const pesan =
+                    `Halo, berikut data formulir:%0A%0A` +
+                    `Nama Kepala Keluarga: ${encodeURIComponent(data.namaLengkap || '-')}%0A` +
+                    `Alamat Blok: ${encodeURIComponent(data.alamatblok || '-')}%0A%0A` +
+                    `📎 File PDF sudah diunduh. Silakan lampirkan file PDF ini di chat.`;
+
+                window.open(`https://web.whatsapp.com/send?phone=${nomorTujuan}&text=${pesan}`, '_blank');
+
+                alert(
+                    'Browser ini tidak mendukung pengiriman file langsung melalui Web Share API.\n\n' +
+                    'PDF sudah diunduh dan WhatsApp Web dibuka. Silakan lampirkan PDF tersebut ke chat.'
+                );
+
+            } catch (err) {
+                console.error(err);
+                alert('Gagal membuat/mengirim PDF: ' + (err.message || err));
+            } finally {
+                if (blobUrl) {
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 3000);
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = oldText || '📄 Download PDF';
+                }
+            }
+        }
+
+        async function generatePDF() {
+            // Dipertahankan untuk kompatibilitas tombol lama.
+            await downloadPDFLokal();
         }
 
         function tambahBaris() {
